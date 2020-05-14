@@ -11,7 +11,7 @@
 
 <meta name="author" content="Ehsan Karim, ehsan.karim@ubc.ca" />
 
-<meta name="date" content="2020-05-13" />
+<meta name="date" content="2020-05-14" />
 
 <title>Webinar: Propensity Score Analysis in Healthcare Data (Part 5: PS weighting - ATE)</title>
 
@@ -1543,7 +1543,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Webinar: Propensity Score Analysis in Healthcare Data (Part 5: PS weighting - ATE)</h1>
 <h4 class="author">Ehsan Karim, <a href="mailto:ehsan.karim@ubc.ca" class="email">ehsan.karim@ubc.ca</a></h4>
-<h4 class="date">13 May 2020</h4>
+<h4 class="date">14 May 2020</h4>
 
 </div>
 
@@ -3332,6 +3332,25 @@ Albumin
 ##  Respiratory.rate             0.98 [0.98;0.99]   &lt; 1e-04 
 ##           Albumin             1.14 [1.01;1.29]   0.04005</code></pre>
 </div>
+</div>
+<div id="truncation" class="section level1">
+<h1><span class="header-section-number">4</span> Truncation</h1>
+<pre class="r"><code>tr &lt;- .01 # checking
+analytic.data$IPW.tr &lt;- analytic.data$IPW
+IPW.cut &lt;- as.numeric(quantile(analytic.data$IPW.tr, probs = c(tr, (1-tr)), na.rm = TRUE))
+analytic.data$IPW.tr[analytic.data$IPW.tr&lt; IPW.cut[1]] &lt;- IPW.cut[1]
+analytic.data$IPW.tr[analytic.data$IPW.tr&gt; IPW.cut[2]] &lt;- IPW.cut[2]
+summary(analytic.data$IPW.tr)</code></pre>
+<pre><code>##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##   1.010   1.116   1.360   1.895   1.895  11.240</code></pre>
+<pre class="r"><code>tapply(analytic.data$IPW.tr, analytic.data$RHC, summary)</code></pre>
+<pre><code>## $`No RHC`
+##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##   1.010   1.072   1.215   1.365   1.473   6.453 
+## 
+## $RHC
+##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##   1.062   1.756   2.304   3.320   3.760  11.240</code></pre>
 </div>
 
 

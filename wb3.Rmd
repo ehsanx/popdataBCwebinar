@@ -135,7 +135,7 @@ set.seed(123)
 logitPS <-  -log(1/analytic.data$PS - 1) # calculate the logit of the propensity score
 hist(logitPS)
 # within which to draw control units 
-# with 1:1 ratio (pair-matching)
+# with 1:2 ratio (not pair-matching)
 match.obj <- matchit(ps.formula, data = analytic.data,
                      distance = 'logit', 
                      method = "nearest", 

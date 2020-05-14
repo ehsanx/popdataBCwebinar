@@ -11,7 +11,7 @@
 
 <meta name="author" content="Ehsan Karim, ehsan.karim@ubc.ca" />
 
-<meta name="date" content="2020-05-13" />
+<meta name="date" content="2020-05-14" />
 
 <title>Webinar: Propensity Score Analysis in Healthcare Data (Part 1: Analytic data)</title>
 
@@ -1543,7 +1543,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Webinar: Propensity Score Analysis in Healthcare Data (Part 1: Analytic data)</h1>
 <h4 class="author">Ehsan Karim, <a href="mailto:ehsan.karim@ubc.ca" class="email">ehsan.karim@ubc.ca</a></h4>
-<h4 class="date">13 May 2020</h4>
+<h4 class="date">14 May 2020</h4>
 
 </div>
 
@@ -3724,10 +3724,97 @@ describe(analytic.data)</code></pre>
 ## Frequency    733   706
 ## Proportion 0.509 0.491
 ## --------------------------------------------------------------------------------</code></pre>
-<div id="table-1-stratified-by-outcome" class="section level2">
-<h2><span class="header-section-number">2.1</span> Table 1 (stratified by Outcome)</h2>
+<div id="crude-table-1-stratified-by-outcome" class="section level2">
+<h2><span class="header-section-number">2.1</span> Crude Table 1 (stratified by Outcome)</h2>
 <pre class="r"><code>require(tableone)
-baselinevars &lt;- c(&quot;age&quot;,&quot;sex&quot;, &quot;race&quot;,&quot;Disease.category&quot;, 
+tab1yc &lt;- CreateTableOne(vars = &quot;RHC&quot;,
+               data = analytic.data, strata = &quot;Death&quot;)
+Tab1yc &lt;- kable(print(tab1yc, showAllLevels = TRUE, smd = FALSE)) %&gt;%
+  kable_styling(bootstrap_options = c(&quot;striped&quot;, &quot;hover&quot;, &quot;condensed&quot;, &quot;responsive&quot;), 
+                full_width = FALSE)</code></pre>
+<pre class="r"><code>Tab1yc</code></pre>
+<table class="table table-striped table-hover table-condensed table-responsive" style="width: auto !important; margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:left;">
+</th>
+<th style="text-align:left;">
+level
+</th>
+<th style="text-align:left;">
+No
+</th>
+<th style="text-align:left;">
+Yes
+</th>
+<th style="text-align:left;">
+p
+</th>
+<th style="text-align:left;">
+test
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+n
+</td>
+<td style="text-align:left;">
+</td>
+<td style="text-align:left;">
+733
+</td>
+<td style="text-align:left;">
+706
+</td>
+<td style="text-align:left;">
+</td>
+<td style="text-align:left;">
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+RHC (%)
+</td>
+<td style="text-align:left;">
+No RHC
+</td>
+<td style="text-align:left;">
+537 (73.3)
+</td>
+<td style="text-align:left;">
+512 (72.5)
+</td>
+<td style="text-align:left;">
+0.798
+</td>
+<td style="text-align:left;">
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+</td>
+<td style="text-align:left;">
+RHC
+</td>
+<td style="text-align:left;">
+196 (26.7)
+</td>
+<td style="text-align:left;">
+194 (27.5)
+</td>
+<td style="text-align:left;">
+</td>
+<td style="text-align:left;">
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="table-1-stratified-by-outcome" class="section level2">
+<h2><span class="header-section-number">2.2</span> Table 1 (stratified by Outcome)</h2>
+<pre class="r"><code>baselinevars &lt;- c(&quot;age&quot;,&quot;sex&quot;, &quot;race&quot;,&quot;Disease.category&quot;, 
                   &quot;Cancer&quot;, &quot;DNR.status&quot;, &quot;APACHE.III.score&quot;,
                   &quot;Pr.2mo.survival&quot;,&quot;No.of.comorbidity&quot;,
                   &quot;ADLs.2wk.prior&quot;,&quot;DASI.2wk.prior&quot;,&quot;Temperature&quot;,
@@ -4408,7 +4495,7 @@ GComa.Score (mean (SD))
 </table>
 </div>
 <div id="unadjusted-regression" class="section level2">
-<h2><span class="header-section-number">2.2</span> Unadjusted regression</h2>
+<h2><span class="header-section-number">2.3</span> Unadjusted regression</h2>
 <pre class="r"><code>fit1 &lt;- glm(I(Death==&quot;Yes&quot;)~RHC,
             family=binomial, data = analytic.data)
 require(jtools)

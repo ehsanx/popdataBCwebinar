@@ -1,7 +1,7 @@
 ---
 title: "Webinar: Propensity Score Analysis in Healthcare Data (Part 5: PS weighting - ATE)"
 author: "Ehsan Karim, ehsan.karim@ubc.ca"
-date: "13 May 2020"
+date: "14 May 2020"
 always_allow_html: yes
 header-includes:
 - \usepackage{float}
@@ -1014,4 +1014,35 @@ publish(fit3)
 ##  APACHE.III.score             1.01 [1.00;1.01]   0.01089 
 ##  Respiratory.rate             0.98 [0.98;0.99]   < 1e-04 
 ##           Albumin             1.14 [1.01;1.29]   0.04005
+```
+
+# Truncation 
+
+
+```r
+tr <- .01 # checking
+analytic.data$IPW.tr <- analytic.data$IPW
+IPW.cut <- as.numeric(quantile(analytic.data$IPW.tr, probs = c(tr, (1-tr)), na.rm = TRUE))
+analytic.data$IPW.tr[analytic.data$IPW.tr< IPW.cut[1]] <- IPW.cut[1]
+analytic.data$IPW.tr[analytic.data$IPW.tr> IPW.cut[2]] <- IPW.cut[2]
+summary(analytic.data$IPW.tr)
+```
+
+```
+##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##   1.010   1.116   1.360   1.895   1.895  11.240
+```
+
+```r
+tapply(analytic.data$IPW.tr, analytic.data$RHC, summary)
+```
+
+```
+## $`No RHC`
+##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##   1.010   1.072   1.215   1.365   1.473   6.453 
+## 
+## $RHC
+##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##   1.062   1.756   2.304   3.320   3.760  11.240
 ```

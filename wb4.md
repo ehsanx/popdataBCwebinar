@@ -1,7 +1,7 @@
 ---
 title: "Webinar: Propensity Score Analysis in Healthcare Data (Part 4: PS weighting - ATT)"
 author: "Ehsan Karim, ehsan.karim@ubc.ca"
-date: "13 May 2020"
+date: "14 May 2020"
 always_allow_html: yes
 header-includes:
 - \usepackage{float}
@@ -840,7 +840,97 @@ publish(fit3)
 ```
 
 
+# Bootstrap
 
+
+```r
+require(boot)
+```
+
+```
+## Loading required package: boot
+```
+
+```
+## 
+## Attaching package: 'boot'
+```
+
+```
+## The following object is masked from 'package:survival':
+## 
+##     aml
+```
+
+```
+## The following object is masked from 'package:lattice':
+## 
+##     melanoma
+```
+
+```r
+ps.boot <- function(data, indices){
+  newdata <- data[indices,]
+  PS.fit <- glm(I(RHC=="RHC") ~ age+sex+race+Disease.category+ 
+                                Cancer+DNR.status+APACHE.III.score+
+                                Pr.2mo.survival+No.of.comorbidity+
+                                ADLs.2wk.prior+DASI.2wk.prior+Temperature+
+                                Heart.rate+Blood.pressure+Respiratory.rate+
+                                WBC.count+PaO2.by.FIO2+PaCO2+pH+
+                                Creatinine+Albumin+GComa.Score, 
+                family=binomial(logit), data=newdata)
+  newdata$PS <- predict(PS.fit, type="response")
+  IPW.ATT <- ifelse(newdata$RHC=="RHC", 
+                1, 
+                newdata$PS/(1-newdata$PS))
+  IPW.ATT.fit <- glm(I(Death=="Yes")~RHC, 
+                 family=quasibinomial, data=newdata, weights = IPW.ATT)
+  return(coef(IPW.ATT.fit)[2])
+}
+```
+
+
+
+
+```r
+boot.res <- boot(data=analytic.data, ps.boot, R=200)
+boot.res
+```
+
+```
+## 
+## ORDINARY NONPARAMETRIC BOOTSTRAP
+## 
+## 
+## Call:
+## boot(data = analytic.data, statistic = ps.boot, R = 200)
+## 
+## 
+## Bootstrap Statistics :
+##      original       bias    std. error
+## t1* 0.0708296 -0.003695711   0.1423916
+```
+
+
+```r
+OR <- round(exp(boot.res$t0),2)
+OR
+```
+
+```
+## RHCRHC 
+##   1.07
+```
+
+```r
+CI <- round(exp(quantile(boot.res$t, c(0.025, 0.975))),2)
+CI
+```
+
+```
+##  2.5% 97.5% 
+##  0.82  1.40
+```
 
 
 

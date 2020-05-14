@@ -11,7 +11,7 @@
 
 <meta name="author" content="Ehsan Karim, ehsan.karim@ubc.ca" />
 
-<meta name="date" content="2020-05-13" />
+<meta name="date" content="2020-05-14" />
 
 <title>Webinar: Propensity Score Analysis in Healthcare Data (Part 4: PS weighting - ATT)</title>
 
@@ -1543,7 +1543,7 @@ div.tocify {
 
 <h1 class="title toc-ignore">Webinar: Propensity Score Analysis in Healthcare Data (Part 4: PS weighting - ATT)</h1>
 <h4 class="author">Ehsan Karim, <a href="mailto:ehsan.karim@ubc.ca" class="email">ehsan.karim@ubc.ca</a></h4>
-<h4 class="date">13 May 2020</h4>
+<h4 class="date">14 May 2020</h4>
 
 </div>
 
@@ -3010,6 +3010,58 @@ RHCRHC
 ##       RHC No RHC       Ref                      
 ##              RHC      1.07 [0.81;1.42]   0.6228</code></pre>
 </div>
+</div>
+<div id="bootstrap" class="section level1">
+<h1><span class="header-section-number">4</span> Bootstrap</h1>
+<pre class="r"><code>require(boot)</code></pre>
+<pre><code>## Loading required package: boot</code></pre>
+<pre><code>## 
+## Attaching package: &#39;boot&#39;</code></pre>
+<pre><code>## The following object is masked from &#39;package:survival&#39;:
+## 
+##     aml</code></pre>
+<pre><code>## The following object is masked from &#39;package:lattice&#39;:
+## 
+##     melanoma</code></pre>
+<pre class="r"><code>ps.boot &lt;- function(data, indices){
+  newdata &lt;- data[indices,]
+  PS.fit &lt;- glm(I(RHC==&quot;RHC&quot;) ~ age+sex+race+Disease.category+ 
+                                Cancer+DNR.status+APACHE.III.score+
+                                Pr.2mo.survival+No.of.comorbidity+
+                                ADLs.2wk.prior+DASI.2wk.prior+Temperature+
+                                Heart.rate+Blood.pressure+Respiratory.rate+
+                                WBC.count+PaO2.by.FIO2+PaCO2+pH+
+                                Creatinine+Albumin+GComa.Score, 
+                family=binomial(logit), data=newdata)
+  newdata$PS &lt;- predict(PS.fit, type=&quot;response&quot;)
+  IPW.ATT &lt;- ifelse(newdata$RHC==&quot;RHC&quot;, 
+                1, 
+                newdata$PS/(1-newdata$PS))
+  IPW.ATT.fit &lt;- glm(I(Death==&quot;Yes&quot;)~RHC, 
+                 family=quasibinomial, data=newdata, weights = IPW.ATT)
+  return(coef(IPW.ATT.fit)[2])
+}</code></pre>
+<pre class="r"><code>boot.res &lt;- boot(data=analytic.data, ps.boot, R=200)
+boot.res</code></pre>
+<pre><code>## 
+## ORDINARY NONPARAMETRIC BOOTSTRAP
+## 
+## 
+## Call:
+## boot(data = analytic.data, statistic = ps.boot, R = 200)
+## 
+## 
+## Bootstrap Statistics :
+##      original       bias    std. error
+## t1* 0.0708296 -0.003695711   0.1423916</code></pre>
+<pre class="r"><code>OR &lt;- round(exp(boot.res$t0),2)
+OR</code></pre>
+<pre><code>## RHCRHC 
+##   1.07</code></pre>
+<pre class="r"><code>CI &lt;- round(exp(quantile(boot.res$t, c(0.025, 0.975))),2)
+CI</code></pre>
+<pre><code>##  2.5% 97.5% 
+##  0.82  1.40</code></pre>
 </div>
 
 

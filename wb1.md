@@ -1,7 +1,7 @@
 ---
 title: "Webinar: Propensity Score Analysis in Healthcare Data (Part 1: Analytic data)"
 author: "Ehsan Karim, ehsan.karim@ubc.ca"
-date: "13 May 2020"
+date: "14 May 2020"
 always_allow_html: yes
 header-includes:
 - \usepackage{float}
@@ -1006,11 +1006,66 @@ describe(analytic.data)
 ## --------------------------------------------------------------------------------
 ```
 
-## Table 1 (stratified by Outcome)
+## Crude Table 1 (stratified by Outcome)
 
 
 ```r
 require(tableone)
+tab1yc <- CreateTableOne(vars = "RHC",
+               data = analytic.data, strata = "Death")
+Tab1yc <- kable(print(tab1yc, showAllLevels = TRUE, smd = FALSE)) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"), 
+                full_width = FALSE)
+```
+
+
+```r
+Tab1yc
+```
+
+<table class="table table-striped table-hover table-condensed table-responsive" style="width: auto !important; margin-left: auto; margin-right: auto;">
+ <thead>
+  <tr>
+   <th style="text-align:left;">   </th>
+   <th style="text-align:left;"> level </th>
+   <th style="text-align:left;"> No </th>
+   <th style="text-align:left;"> Yes </th>
+   <th style="text-align:left;"> p </th>
+   <th style="text-align:left;"> test </th>
+  </tr>
+ </thead>
+<tbody>
+  <tr>
+   <td style="text-align:left;"> n </td>
+   <td style="text-align:left;">  </td>
+   <td style="text-align:left;"> 733 </td>
+   <td style="text-align:left;"> 706 </td>
+   <td style="text-align:left;">  </td>
+   <td style="text-align:left;">  </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> RHC (%) </td>
+   <td style="text-align:left;"> No RHC </td>
+   <td style="text-align:left;"> 537 (73.3) </td>
+   <td style="text-align:left;"> 512 (72.5) </td>
+   <td style="text-align:left;"> 0.798 </td>
+   <td style="text-align:left;">  </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;">  </td>
+   <td style="text-align:left;"> RHC </td>
+   <td style="text-align:left;"> 196 (26.7) </td>
+   <td style="text-align:left;"> 194 (27.5) </td>
+   <td style="text-align:left;">  </td>
+   <td style="text-align:left;">  </td>
+  </tr>
+</tbody>
+</table>
+
+## Table 1 (stratified by Outcome)
+
+
+```r
 baselinevars <- c("age","sex", "race","Disease.category", 
                   "Cancer", "DNR.status", "APACHE.III.score",
                   "Pr.2mo.survival","No.of.comorbidity",

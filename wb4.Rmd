@@ -171,7 +171,43 @@ publish(fit3)
 ```
 
 
+# Bootstrap
 
+```{r boot, cache=TRUE}
+require(boot)
+ps.boot <- function(data, indices){
+  newdata <- data[indices,]
+  PS.fit <- glm(I(RHC=="RHC") ~ age+sex+race+Disease.category+ 
+                                Cancer+DNR.status+APACHE.III.score+
+                                Pr.2mo.survival+No.of.comorbidity+
+                                ADLs.2wk.prior+DASI.2wk.prior+Temperature+
+                                Heart.rate+Blood.pressure+Respiratory.rate+
+                                WBC.count+PaO2.by.FIO2+PaCO2+pH+
+                                Creatinine+Albumin+GComa.Score, 
+                family=binomial(logit), data=newdata)
+  newdata$PS <- predict(PS.fit, type="response")
+  IPW.ATT <- ifelse(newdata$RHC=="RHC", 
+                1, 
+                newdata$PS/(1-newdata$PS))
+  IPW.ATT.fit <- glm(I(Death=="Yes")~RHC, 
+                 family=quasibinomial, data=newdata, weights = IPW.ATT)
+  return(coef(IPW.ATT.fit)[2])
+}
+```
+
+
+
+```{r boot2, cache=TRUE}
+boot.res <- boot(data=analytic.data, ps.boot, R=200)
+boot.res
+```
+
+```{r boot3, cache=TRUE}
+OR <- round(exp(boot.res$t0),2)
+OR
+CI <- round(exp(quantile(boot.res$t, c(0.025, 0.975))),2)
+CI
+```
 
 
 

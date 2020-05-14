@@ -181,3 +181,16 @@ fit3 <- glm(I(Death=="Yes")~RHC+
 summ(fit3, exp = TRUE)
 publish(fit3)
 ```
+
+# Truncation 
+
+```{r tr, cache=TRUE}
+
+tr <- .01 # checking
+analytic.data$IPW.tr <- analytic.data$IPW
+IPW.cut <- as.numeric(quantile(analytic.data$IPW.tr, probs = c(tr, (1-tr)), na.rm = TRUE))
+analytic.data$IPW.tr[analytic.data$IPW.tr< IPW.cut[1]] <- IPW.cut[1]
+analytic.data$IPW.tr[analytic.data$IPW.tr> IPW.cut[2]] <- IPW.cut[2]
+summary(analytic.data$IPW.tr)
+tapply(analytic.data$IPW.tr, analytic.data$RHC, summary)
+```

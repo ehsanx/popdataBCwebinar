@@ -1,7 +1,7 @@
 ---
 title: "Webinar: Propensity Score Analysis in Healthcare Data (Part 3: PS matching, more options)"
 author: "Ehsan Karim, ehsan.karim@ubc.ca"
-date: "13 May 2020"
+date: "14 May 2020"
 always_allow_html: yes
 header-includes:
 - \usepackage{float}
@@ -425,7 +425,7 @@ hist(logitPS)
 
 ```r
 # within which to draw control units 
-# with 1:1 ratio (pair-matching)
+# with 1:2 ratio (not pair-matching)
 match.obj <- matchit(ps.formula, data = analytic.data,
                      distance = 'logit', 
                      method = "nearest", 

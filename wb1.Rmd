@@ -128,10 +128,24 @@ require(Hmisc)
 describe(analytic.data)
 ```
 
+## Crude Table 1 (stratified by Outcome)
+
+```{r tab1yc, cache=TRUE, echo= TRUE,results="hide"}
+require(tableone)
+tab1yc <- CreateTableOne(vars = "RHC",
+               data = analytic.data, strata = "Death")
+Tab1yc <- kable(print(tab1yc, showAllLevels = TRUE, smd = FALSE)) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"), 
+                full_width = FALSE)
+```
+
+```{r tab1ybc, cache=TRUE}
+Tab1yc
+```
+
 ## Table 1 (stratified by Outcome)
 
 ```{r tab1y, cache=TRUE, echo= TRUE,results="hide"}
-require(tableone)
 baselinevars <- c("age","sex", "race","Disease.category", 
                   "Cancer", "DNR.status", "APACHE.III.score",
                   "Pr.2mo.survival","No.of.comorbidity",
