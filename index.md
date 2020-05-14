@@ -5,6 +5,8 @@ author: "Ehsan Karim, ehsan.karim@ubc.ca"
 
 # Propensity Score Analysis in Healthcare Data
 
+Link to webinar [RMD files](https://github.com/ehsanx/popdataBCwebinar) on GitHub.
+
 ## Summary
 
 This webinar will focus on learning causal inference approaches in a healthcare data analysis context with a particular focus on explaining the application of propensity score analysis in a real-world data analysis context. The session will outline how these analyses are different than conventional regression methods and will address key assumptions/diagnostics of these models.
@@ -25,20 +27,20 @@ Background in causal inference is not required. Attendees should have prerequisi
 
 ## Sample Data Source
 
-- [Research Article](https://jamanetwork.com/journals/jama/articlepdf/407990/jama_276_11_030.pdf): The effectiveness of Right Heart Catheterization in the initial care of critically ill patients.
+- [Research Article](https://jamanetwork.com/journals/jama/articlepdf/407990/jama_276_11_030.pdf): The effectiveness of Right Heart Catheterization (RHC) in the initial care of critically ill patients.
 - [Details](http://biostat.mc.vanderbilt.edu/wiki/pub/Main/DataSets/rhc.html) about the training dataset:
 - Link to download the [training dataset](http://biostat.mc.vanderbilt.edu/wiki/pub/Main/DataSets/rhc.csv).
 
 ### Lab Materials
 
 | # | Topic | Lab Links |
-|---|--------------|-----------------------------------------------------|
-| 1 | Data manipulation | [Part 1](https://htmlpreview.github.io/?https://raw.githubusercontent.com/ehsanx/popdataBCwebinar/master/wb1.html) 
-| 2 | PS matching | [Part 2](https://htmlpreview.github.io/?https://raw.githubusercontent.com/ehsanx/popdataBCwebinar/master/wb2.html) 
-| 3 | PS matching | [Part 3](https://htmlpreview.github.io/?https://raw.githubusercontent.com/ehsanx/popdataBCwebinar/master/wb3.html) 
-| 4 | PS weighting - ATT | [Part 4](https://htmlpreview.github.io/?https://raw.githubusercontent.com/ehsanx/popdataBCwebinar/master/wb4.html) 
-| 5 | PS weighting - ATE | [Part 5](https://htmlpreview.github.io/?https://raw.githubusercontent.com/ehsanx/popdataBCwebinar/master/wb5.html) 
-| 6 | Regression | [Part 6](https://htmlpreview.github.io/?https://raw.githubusercontent.com/ehsanx/popdataBCwebinar/master/wb6.html) 
+|---|-----------|----------------------------------|
+| 1 | RHC Data manipulation | [Part 1](https://htmlpreview.github.io/?https://raw.githubusercontent.com/ehsanx/popdataBCwebinar/master/wb1.html) 
+| 2 | Propensity score matching | [Part 2](https://htmlpreview.github.io/?https://raw.githubusercontent.com/ehsanx/popdataBCwebinar/master/wb2.html) 
+| 3 | Propensity score matching, more options | [Part 3](https://htmlpreview.github.io/?https://raw.githubusercontent.com/ehsanx/popdataBCwebinar/master/wb3.html) 
+| 4 | Propensity score weighting - ATT | [Part 4](https://htmlpreview.github.io/?https://raw.githubusercontent.com/ehsanx/popdataBCwebinar/master/wb4.html) 
+| 5 | Propensity score weighting - ATE | [Part 5](https://htmlpreview.github.io/?https://raw.githubusercontent.com/ehsanx/popdataBCwebinar/master/wb5.html) 
+| 6 | Multivariate Regression | [Part 6](https://htmlpreview.github.io/?https://raw.githubusercontent.com/ehsanx/popdataBCwebinar/master/wb6.html) 
 
 
 ## Software Requirements
@@ -58,3 +60,7 @@ It is assumed that you have the following software packages installed. Webinar d
 
 - Austin, P. C. (2011). A tutorial and case study in propensity score analysis: an application to estimating the effect of in-hospital smoking cessation counseling on mortality. Multivariate behavioral research, 46(1), 119-151. [link](https://www.tandfonline.com/doi/pdf/10.1080/00273171.2011.540480)
 - Lee, J., & Little, T. D. (2017). A practical guide to propensity score analysis for applied clinical research. Behaviour research and therapy, 98, 76-90. [link](https://www.sciencedirect.com/science/article/abs/pii/S0005796717300141)
+
+### Propensity score-related web-Apps
+- [x] [Propensity scores by example](https://ehsanx.shinyapps.io/project1/)
+- [x] [Inverse probability weights by example](https://ehsanx.shinyapps.io/project0/)
