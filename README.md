@@ -1,5 +1,7 @@
 # Propensity Score Analysis in Healthcare Data
 
+[Ehsan Karim](http://ehsank.com/)
+
 Link to [HTML](https://ehsanx.github.io/popdataBCwebinar/) page.
 
 ## Summary

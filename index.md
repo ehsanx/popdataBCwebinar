@@ -1,9 +1,11 @@
 ---
 title: "Introduction to Causal Inference"
-author: "Ehsan Karim, ehsan.karim@ubc.ca"
 ---
 
 # Propensity Score Analysis in Healthcare Data
+
+<div align="center"> Ehsan Karim </div>
+<div align="center"> [ehsank.com](http://ehsank.com/) </div>
 
 Link to webinar [RMD files](https://github.com/ehsanx/popdataBCwebinar) on GitHub.
 
