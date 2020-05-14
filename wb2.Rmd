@@ -1,0 +1,198 @@
+---
+title: "Webinar: Propensity Score Analysis in Healthcare Data (Part 2: PS matching)"
+author: "Ehsan Karim, ehsan.karim@ubc.ca"
+date: "`r format(Sys.time(), '%d %B %Y')`"
+always_allow_html: yes
+header-includes:
+- \usepackage{float}
+- \usepackage{booktabs}
+- \floatplacement{figure}{H}
+- \usepackage{fancyhdr,textcomp,xcolor}
+- \pagestyle{fancy}
+- \fancyhead[LE,RO]{\texttt{\tiny{\textcolor{gray}{Do not use, share or revise without explicit written permission from the copyright owner} \\ \textcolor{gray}{Ehsan Karim} \textcolor{red}{\textcopyright} \textcolor{gray}{\the\year} \textcolor{blue}{ ehsan.karim@ubc.ca}}}}
+output:
+  html_document:
+    fig_caption: yes
+    keep_md: yes
+    toc: yes
+    number_sections: true
+    toc_depth: 2
+    toc_float: 
+      collapsed: true
+      smooth_scroll: true
+    theme: lumen
+    highlight: textmate
+  pdf_document:
+    fig_caption: yes
+    latex_engine: xelatex
+    number_sections: yes
+    toc: yes
+    toc_depth: 3
+  word_document:
+    toc: yes
+  slidy_presentation:
+    toc: yes  
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+require(kableExtra)
+require(Hmisc)
+require(tableone)
+require(Publish)
+require(jtools)
+require(broom.mixed)
+require(MatchIt)
+require(survey)
+```
+
+# Read data
+
+```{r load, cache=TRUE}
+analytic.data <- readRDS("data/RHC.Rds")
+baselinevars <- c("age","sex", "race","Disease.category", 
+                  "Cancer", "DNR.status", "APACHE.III.score",
+                  "Pr.2mo.survival","No.of.comorbidity",
+                  "ADLs.2wk.prior","DASI.2wk.prior","Temperature",
+                  "Heart.rate", "Blood.pressure","Respiratory.rate",
+                  "WBC.count","PaO2.by.FIO2","PaCO2","pH",
+                  "Creatinine","Albumin","GComa.Score")
+```
+
+# Propensity score (PS) analysis
+
+## Table 1 (stratified by exposure)
+
+```{r tab1, cache=TRUE, echo= TRUE,results="hide"}
+require(tableone)
+tab1 <- CreateTableOne(vars = baselinevars,
+               data = analytic.data, strata = "RHC", includeNA = TRUE, 
+               test = FALSE, smd = TRUE)
+tab1k <- kable(print(tab1, showAllLevels = TRUE, smd = TRUE)) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"), 
+                full_width = FALSE)
+```
+
+```{r tab1b, cache=TRUE}
+tab1k
+```
+
+## PS modelling
+
+```{r ps, cache=TRUE}
+ps.formula <- as.formula(I(RHC == "RHC") ~ age+sex+race+Disease.category+ 
+                                Cancer+DNR.status+APACHE.III.score+
+                                Pr.2mo.survival+No.of.comorbidity+
+                                ADLs.2wk.prior+DASI.2wk.prior+Temperature+
+                                Heart.rate+Blood.pressure+Respiratory.rate+
+                                WBC.count+PaO2.by.FIO2+PaCO2+pH+
+                                Creatinine+Albumin+GComa.Score)
+# fit logistic regression
+PS.fit <- glm(ps.formula,family="binomial", data=analytic.data)
+# extract propensity scores
+analytic.data$PS <- predict(PS.fit, newdata = analytic.data, type="response")
+# summarize propensity scores
+summary(analytic.data$PS)
+# summarize propensity scores by exposure group
+tapply(analytic.data$PS, analytic.data$RHC, summary)
+# plot propensity scores by exposure group
+plot(density(analytic.data$PS), col = "white", type = "n", main = "")
+lines(density(analytic.data$PS[analytic.data$RHC == "RHC"]), 
+     col = "red")
+lines(density(analytic.data$PS[analytic.data$RHC == "No RHC"]), 
+      col = "blue", lty = 2)
+legend("topright", c("RHC","No RHC"), 
+       col = c("red", "blue"), lty=1:2)
+```
+
+# PS Matching 
+
+We follow 4 steps as described in Austin 2011.
+
+## Step 1
+Specify the propensity score model to estimate propensity scores
+
+```{r ps1, cache=TRUE}
+ps.formula <- as.formula(I(RHC == "RHC") ~ age+sex+race+Disease.category+ 
+                                Cancer+DNR.status+APACHE.III.score+
+                                Pr.2mo.survival+No.of.comorbidity+
+                                ADLs.2wk.prior+DASI.2wk.prior+Temperature+
+                                Heart.rate+Blood.pressure+Respiratory.rate+
+                                WBC.count+PaO2.by.FIO2+PaCO2+pH+
+                                Creatinine+Albumin+GComa.Score)
+```
+
+## Step 2
+
+```{r ps2, cache=TRUE}
+require(MatchIt)
+set.seed(123)
+# This function fits propensity score model (using logistic 
+# regression as above) when specified distance = 'logit'
+# performs nearest-neighbor (NN) matching, 
+# without replacement 
+# with caliper = .2*SD of propensity score  
+logitPS <-  -log(1/analytic.data$PS - 1) # calculate the logit of the propensity score
+hist(logitPS)
+# within which to draw control units 
+# with 1:1 ratio (pair-matching)
+match.obj <- matchit(ps.formula, data = analytic.data,
+                     distance = 'logit', 
+                     method = "nearest", 
+                     replace=FALSE,
+                     caliper = .2*sd(logitPS), 
+                     ratio = 1)
+# see matchit function options here
+# https://www.rdocumentation.org/packages/MatchIt/versions/1.0-1/topics/matchit
+analytic.data$PS <- match.obj$distance
+summary(match.obj$distance)
+plot(match.obj, type = "jitter")
+plot(match.obj, type = "hist")
+```
+
+```{r ps2b, cache=TRUE}
+tapply(analytic.data$PS, analytic.data$RHC, summary)
+# check how many matched
+match.obj
+summary(match.obj, standardize = TRUE)
+# extract matched data
+matched.data <- match.data(match.obj)
+```
+
+## Step 3
+
+Compare the similarity of baseline characteristics between treated and untreated subjects in a the propensity score-matched sample. In this case, we will compare SMD < 0.1 or not
+
+```{r ps3, cache=TRUE, echo= TRUE,results="hide"}
+tab1m <- CreateTableOne(vars = baselinevars,
+               data = matched.data, strata = "RHC", includeNA = TRUE, 
+               test = FALSE, smd = TRUE)
+tab1mk <- kable(print(tab1m, showAllLevels = TRUE, smd = TRUE)) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"), 
+                full_width = FALSE)
+```
+
+```{r ps3b, cache=TRUE}
+tab1mk
+```
+
+
+## Step 4
+
+Estimate the effect of treatment on outcomes using propensity score-matched sample
+
+```{r, ps4, cache=TRUE}
+fit3 <- glm(I(Death=="Yes")~RHC,
+            family=binomial, data = matched.data)
+summ(fit3, exp = TRUE)
+publish(fit3)
+```
+
+General idea is that if any SMD >= 0.1, go back to the modelling stage, and change the PS model specification. If all else fails, adjust for the variables that are indicating some residual imbalance. 
+
+```{r, ps4b, cache=TRUE}
+fit4 <- glm(I(Death=="Yes")~RHC+age+DNR.status,
+            family=binomial, data = matched.data)
+summ(fit4, exp = TRUE)
+publish(fit4)
+```

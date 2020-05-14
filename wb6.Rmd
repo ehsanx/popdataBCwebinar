@@ -1,0 +1,69 @@
+---
+title: "Webinar: Propensity Score Analysis in Healthcare Data (Part 6: Regression)"
+author: "Ehsan Karim, ehsan.karim@ubc.ca"
+date: "`r format(Sys.time(), '%d %B %Y')`"
+always_allow_html: yes
+header-includes:
+- \usepackage{float}
+- \usepackage{booktabs}
+- \floatplacement{figure}{H}
+- \usepackage{fancyhdr,textcomp,xcolor}
+- \pagestyle{fancy}
+- \fancyhead[LE,RO]{\texttt{\tiny{\textcolor{gray}{Do not use, share or revise without explicit written permission from the copyright owner} \\ \textcolor{gray}{Ehsan Karim} \textcolor{red}{\textcopyright} \textcolor{gray}{\the\year} \textcolor{blue}{ ehsan.karim@ubc.ca}}}}
+output:
+  html_document:
+    fig_caption: yes
+    keep_md: yes
+    toc: yes
+    number_sections: true
+    toc_depth: 2
+    toc_float: 
+      collapsed: true
+      smooth_scroll: true
+    theme: lumen
+    highlight: textmate
+  pdf_document:
+    fig_caption: yes
+    latex_engine: xelatex
+    number_sections: yes
+    toc: yes
+    toc_depth: 3
+  word_document:
+    toc: yes
+  slidy_presentation:
+    toc: yes  
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+require(kableExtra)
+require(Hmisc)
+require(tableone)
+require(Publish)
+require(jtools)
+require(broom.mixed)
+require(MatchIt)
+require(survey)
+```
+
+# Read data
+
+```{r load, cache=TRUE}
+analytic.data <- readRDS("data/RHC.Rds")
+```
+
+# Regression
+
+```{r regadj, cache=TRUE}
+fit2 <- glm(I(Death=="Yes")~RHC+age+sex+race+Disease.category+ 
+                                Cancer+DNR.status+APACHE.III.score+
+                                Pr.2mo.survival+No.of.comorbidity+
+                                ADLs.2wk.prior+DASI.2wk.prior+Temperature+
+                                Heart.rate+Blood.pressure+Respiratory.rate+
+                                WBC.count+PaO2.by.FIO2+PaCO2+pH+
+                                Creatinine+Albumin+GComa.Score,
+            family=binomial, data = analytic.data)
+summ(fit2, conf = TRUE, digits = 2, exp = TRUE)
+plot_summs(fit2, exp = TRUE)
+publish(fit2)
+```

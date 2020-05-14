@@ -1,0 +1,168 @@
+---
+title: "Webinar: Propensity Score Analysis in Healthcare Data (Part 1: Analytic data)"
+author: "Ehsan Karim, ehsan.karim@ubc.ca"
+date: "`r format(Sys.time(), '%d %B %Y')`"
+always_allow_html: yes
+header-includes:
+- \usepackage{float}
+- \usepackage{booktabs}
+- \floatplacement{figure}{H}
+- \usepackage{fancyhdr,textcomp,xcolor}
+- \pagestyle{fancy}
+- \fancyhead[LE,RO]{\texttt{\tiny{\textcolor{gray}{Do not use, share or revise without explicit written permission from the copyright owner} \\ \textcolor{gray}{Ehsan Karim} \textcolor{red}{\textcopyright} \textcolor{gray}{\the\year} \textcolor{blue}{ ehsan.karim@ubc.ca}}}}
+output:
+  html_document:
+    fig_caption: yes
+    keep_md: yes
+    toc: yes
+    number_sections: true
+    toc_depth: 2
+    toc_float: 
+      collapsed: true
+      smooth_scroll: true
+    theme: lumen
+    highlight: textmate
+  pdf_document:
+    fig_caption: yes
+    latex_engine: xelatex
+    number_sections: yes
+    toc: yes
+    toc_depth: 3
+  word_document:
+    toc: yes
+  slidy_presentation:
+    toc: yes  
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+require(kableExtra)
+require(Hmisc)
+require(tableone)
+require(Publish)
+require(jtools)
+require(broom.mixed)
+require(MatchIt)
+require(survey)
+```
+
+# Read data
+
+Data from the effectiveness of Right Heart Catheterization in the initial care of critically ill patients study.
+
+## Download
+```{r load, cache=TRUE}
+rhc.original <- read.csv("http://biostat.mc.vanderbilt.edu/wiki/pub/Main/DataSets/rhc.csv")
+```
+
+```{r checkload, cache=TRUE}
+require(kableExtra)
+kable(head(rhc.original)) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive")) %>%
+  scroll_box(width = "100%", height = "200px")
+```
+
+
+## Formatting
+```{r formatr, cache=TRUE}
+rhc <- rhc.original
+# Change the Age variable into categories  below 50, [50,60), [60,70), [70,80), above 80
+rhc$age <- cut(rhc$age,breaks=c(-Inf, 50, 60, 70, 80, Inf),right=FALSE)
+# Re-order the levels of race to white, black and other
+rhc$race <- factor(rhc$race, levels=c("white","black","other"))
+# merging disease categories
+rhc$cat1 <- as.character(rhc$cat1)
+rhc$cat1[rhc$cat1 == "Lung Cancer"] <- "Other"
+rhc$cat1[rhc$cat1 == "COPD"] <- "Other"
+rhc$cat1[rhc$cat1 == "Coma"] <- "Other"
+rhc$cat1[rhc$cat1 == "Cirrhosis"] <- "Other"
+rhc$cat1[rhc$cat1 == "Colon Cancer"] <- "Other"
+rhc$cat1[rhc$cat1 == "MOSF w/Malignancy"] <- "MOSF"
+rhc$cat1[rhc$cat1 == "MOSF w/Sepsis"] <- "MOSF"
+rhc$cat1 <- as.factor(rhc$cat1)
+# Change the baseline for gender to Male
+rhc$sex <- relevel(rhc$sex, ref = "Male")
+# Regroup the levels for disease categories to "ARF","CHF","MOSF","Other".
+levels(rhc$ca) <- c("Metastatic","None","Localized (Yes)")
+# Rename the levels of "ca" (Cancer) to "Metastatic","None" and "Localized (Yes)", 
+rhc$ca <- factor(rhc$ca, levels=c("None","Localized (Yes)","Metastatic"))
+# re-order the levels to "None","Localized (Yes)" and "Metastatic"
+rhc$ca <- factor(rhc$ca, levels=c("None","Localized (Yes)","Metastatic"))
+# create a new variable called "numcom" to count number of comorbidities illness for each person  
+# (12 categories)
+rhc$numcom <- rhc$cardiohx + rhc$chfhx + rhc$dementhx + rhc$psychhx + 
+  rhc$chrpulhx + rhc$renalhx + rhc$liverhx + rhc$gibledhx + rhc$malighx + 
+  rhc$immunhx + rhc$transhx +rhc$amihx
+# Create a dataset that has only the following variables: 
+# "age","sex", "race","cat1", "ca", "dnr1", "aps1","surv2md1",
+# "numcom","adld3p","das2d3pc","temp1","hrt1","meanbp1","resp1",
+# "wblc1","pafi1","paco21","ph1","crea1","alb1","scoma1","swang1", 
+# and name it rhc2.
+rhc2 <- rhc[c("age","sex", "race","cat1", "ca", "dnr1", "aps1",
+              "surv2md1","numcom","adld3p","das2d3pc","temp1",
+              "hrt1","meanbp1","resp1","wblc1","pafi1","paco21",
+              "ph1","crea1","alb1","scoma1","swang1", "death")]
+names(rhc2) <- c("age","sex", "race","Disease.category", "Cancer", 
+                 "DNR.status", "APACHE.III.score", "Pr.2mo.survival",
+                 "No.of.comorbidity","ADLs.2wk.prior","DASI.2wk.prior",
+                 "Temperature","Heart.rate","Blood.pressure",
+                 "Respiratory.rate","WBC.count","PaO2.by.FIO2","PaCO2",
+                 "pH","Creatinine","Albumin","GComa.Score","RHC", "Death")
+# simplifying analysis (usually not a good idea!)
+analytic.data <- as.data.frame(na.omit(rhc2)) 
+rm(rhc2)
+```
+
+```{r formatr2, cache=TRUE}
+kable(head(analytic.data)) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive")) %>%
+  scroll_box(width = "100%", height = "200px")
+```
+
+
+# Summarize
+
+```{r summ1, cache=TRUE}
+dim(analytic.data)
+require(Hmisc)
+describe(analytic.data)
+```
+
+## Table 1 (stratified by Outcome)
+
+```{r tab1y, cache=TRUE, echo= TRUE,results="hide"}
+require(tableone)
+baselinevars <- c("age","sex", "race","Disease.category", 
+                  "Cancer", "DNR.status", "APACHE.III.score",
+                  "Pr.2mo.survival","No.of.comorbidity",
+                  "ADLs.2wk.prior","DASI.2wk.prior","Temperature",
+                  "Heart.rate", "Blood.pressure","Respiratory.rate",
+                  "WBC.count","PaO2.by.FIO2","PaCO2","pH",
+                  "Creatinine","Albumin","GComa.Score")
+tab1y <- CreateTableOne(vars = baselinevars,
+               data = analytic.data, strata = "Death", includeNA = TRUE, 
+               test = TRUE, smd = FALSE)
+Tab1y <- kable(print(tab1y, showAllLevels = TRUE, smd = FALSE)) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"), 
+                full_width = FALSE)
+```
+
+```{r tab1yb, cache=TRUE}
+Tab1y
+```
+
+## Unadjusted regression
+
+```{r reg, cache=TRUE}
+fit1 <- glm(I(Death=="Yes")~RHC,
+            family=binomial, data = analytic.data)
+require(jtools)
+summ(fit1, conf = TRUE, digits = 2, exp = TRUE)
+require(Publish)
+publish(fit1)
+```
+
+```{r}
+saveRDS(analytic.data, "data/RHC.Rds")
+```
+

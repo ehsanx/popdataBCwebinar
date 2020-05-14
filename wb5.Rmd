@@ -1,0 +1,183 @@
+---
+title: "Webinar: Propensity Score Analysis in Healthcare Data (Part 5: PS weighting - ATE)"
+author: "Ehsan Karim, ehsan.karim@ubc.ca"
+date: "`r format(Sys.time(), '%d %B %Y')`"
+always_allow_html: yes
+header-includes:
+- \usepackage{float}
+- \usepackage{booktabs}
+- \floatplacement{figure}{H}
+- \usepackage{fancyhdr,textcomp,xcolor}
+- \pagestyle{fancy}
+- \fancyhead[LE,RO]{\texttt{\tiny{\textcolor{gray}{Do not use, share or revise without explicit written permission from the copyright owner} \\ \textcolor{gray}{Ehsan Karim} \textcolor{red}{\textcopyright} \textcolor{gray}{\the\year} \textcolor{blue}{ ehsan.karim@ubc.ca}}}}
+output:
+  html_document:
+    fig_caption: yes
+    keep_md: yes
+    toc: yes
+    number_sections: true
+    toc_depth: 2
+    toc_float: 
+      collapsed: true
+      smooth_scroll: true
+    theme: lumen
+    highlight: textmate
+  pdf_document:
+    fig_caption: yes
+    latex_engine: xelatex
+    number_sections: yes
+    toc: yes
+    toc_depth: 3
+  word_document:
+    toc: yes
+  slidy_presentation:
+    toc: yes  
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+require(kableExtra)
+require(Hmisc)
+require(tableone)
+require(Publish)
+require(jtools)
+require(broom.mixed)
+require(MatchIt)
+require(survey)
+```
+
+# Read data
+
+```{r load, cache=TRUE}
+analytic.data <- readRDS("data/RHC.Rds")
+baselinevars <- c("age","sex", "race","Disease.category", 
+                  "Cancer", "DNR.status", "APACHE.III.score",
+                  "Pr.2mo.survival","No.of.comorbidity",
+                  "ADLs.2wk.prior","DASI.2wk.prior","Temperature",
+                  "Heart.rate", "Blood.pressure","Respiratory.rate",
+                  "WBC.count","PaO2.by.FIO2","PaCO2","pH",
+                  "Creatinine","Albumin","GComa.Score")
+```
+
+# Propensity score (PS) analysis
+
+## Table 1 (stratified by exposure)
+
+```{r tab1, cache=TRUE, echo= TRUE,results="hide"}
+require(tableone)
+tab1 <- CreateTableOne(vars = baselinevars,
+               data = analytic.data, strata = "RHC", includeNA = TRUE, 
+               test = FALSE, smd = TRUE)
+tab1k <- kable(print(tab1, showAllLevels = TRUE, smd = TRUE)) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"), 
+                full_width = FALSE)
+```
+
+```{r tab1b, cache=TRUE}
+tab1k
+```
+
+## PS modelling
+
+```{r ps, cache=TRUE}
+ps.formula <- as.formula(I(RHC == "RHC") ~ age+sex+race+Disease.category+ 
+                                Cancer+DNR.status+APACHE.III.score+
+                                Pr.2mo.survival+No.of.comorbidity+
+                                ADLs.2wk.prior+DASI.2wk.prior+Temperature+
+                                Heart.rate+Blood.pressure+Respiratory.rate+
+                                WBC.count+PaO2.by.FIO2+PaCO2+pH+
+                                Creatinine+Albumin+GComa.Score)
+# fit logistic regression
+PS.fit <- glm(ps.formula,family="binomial", data=analytic.data)
+# extract propensity scores
+analytic.data$PS <- predict(PS.fit, newdata = analytic.data, type="response")
+# summarize propensity scores
+summary(analytic.data$PS)
+# summarize propensity scores by exposure group
+tapply(analytic.data$PS, analytic.data$RHC, summary)
+# plot propensity scores by exposure group
+plot(density(analytic.data$PS), col = "white", type = "n", main = "")
+lines(density(analytic.data$PS[analytic.data$RHC == "RHC"]), 
+     col = "red")
+lines(density(analytic.data$PS[analytic.data$RHC == "No RHC"]), 
+      col = "blue", lty = 2)
+legend("topright", c("RHC","No RHC"), 
+       col = c("red", "blue"), lty=1:2)
+```
+
+# PS Weighting (ATE)
+
+## Step 1
+Specify the propensity score model to estimate propensity scores
+
+```{r ps1w, cache=TRUE}
+ps.formula <- as.formula(I(RHC == "RHC") ~ age+sex+race+Disease.category+ 
+                                Cancer+DNR.status+APACHE.III.score+
+                                Pr.2mo.survival+No.of.comorbidity+
+                                ADLs.2wk.prior+DASI.2wk.prior+Temperature+
+                                Heart.rate+Blood.pressure+Respiratory.rate+
+                                WBC.count+PaO2.by.FIO2+PaCO2+pH+
+                                Creatinine+Albumin+GComa.Score)
+```
+
+## Step 2
+
+Convert propensity scores to IPW (ATE formula)
+
+```{r ps2w, cache=TRUE}
+analytic.data$IPW <- ifelse(analytic.data$RHC=="RHC", 
+                            1/analytic.data$PS, 
+                            1/(1-analytic.data$PS))
+summary(analytic.data$IPW)
+```
+
+```{r ps2bw, cache=TRUE}
+tapply(analytic.data$IPW, 
+       analytic.data$RHC, 
+       summary)
+```
+
+## Step 3
+
+Compare the similarity of baseline characteristics between treated and untreated subjects in a the propensity score-weighted sample. In this case, we will compare SMD < 0.1 or not
+
+```{r ps3w, cache=TRUE, echo= TRUE,results="hide"}
+require(survey)
+analytic.design <- svydesign(id=~1,weights=~IPW, 
+                             data=analytic.data, nest=TRUE)
+tab1m <- svyCreateTableOne(vars = baselinevars,
+               data = analytic.design, strata = "RHC", includeNA = TRUE, 
+               test = FALSE, smd = TRUE)
+tab1mk <- kable(print(tab1m, showAllLevels = TRUE, smd = TRUE)) %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"), 
+                full_width = FALSE)
+```
+
+```{r ps3bw, cache=TRUE}
+tab1mk
+```
+
+
+## Step 4
+
+Estimate the effect of treatment on outcomes using propensity score-weighted sample
+
+```{r, ps4w, cache=TRUE}
+fit3 <- glm(I(Death=="Yes")~RHC,
+            family=binomial, data = analytic.data,
+            weights = IPW)
+summ(fit3, exp = TRUE)
+publish(fit3)
+```
+
+General idea is that if any SMD >= 0.1, go back to the modelling stage, and change the PS model specification. If all else fails, adjust for the variables that are indicating some residual imbalance.
+
+```{r, ps4w2b, cache=TRUE}
+fit3 <- glm(I(Death=="Yes")~RHC+
+              Disease.category+DNR.status+
+              APACHE.III.score+Respiratory.rate+Albumin ,
+            family=binomial, data = analytic.data,
+            weights = IPW)
+summ(fit3, exp = TRUE)
+publish(fit3)
+```
