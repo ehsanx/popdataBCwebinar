@@ -4,6 +4,8 @@
 
 Link to [HTML](https://ehsanx.github.io/popdataBCwebinar/) page.
 
+**Citation**: Karim, ME. (2020) "Propensity Score Analysis in Healthcare Data". https://doi.org/10.5281/zenodo.4127284
+
 ## Summary
 
 This webinar will focus on learning causal inference approaches in a healthcare data analysis context with a particular focus on explaining the application of propensity score analysis in a real-world data analysis context. The session will outline how these analyses are different than conventional regression methods and will address key assumptions/diagnostics of these models.
