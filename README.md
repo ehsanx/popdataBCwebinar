@@ -4,7 +4,7 @@
 
 Link to [HTML](https://ehsanx.github.io/popdataBCwebinar/) page.
 
-**Citation**: Karim, ME. (2020) "Propensity Score Analysis in Healthcare Data". https://doi.org/10.5281/zenodo.4127284
+**Citation**: Karim ME. (2020, October 24). Propensity Score Analysis in Healthcare Data (popdataBC webinar materials): First release (Version 1.0.0). Zenodo. http://doi.org/10.5281/zenodo.4127284
 
 ## Summary
 
